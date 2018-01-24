@@ -1,6 +1,6 @@
 # cfcli-reactor-sample
 
-Add the api host, username and passord to the application.properties file
+Add the api host, username and password to the application.properties file
 
 There are 2 endpoints
 

@@ -22,9 +22,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-		<cloudfoundry-client.version>2.11.0.RELEASE</cloudfoundry-client.version>
+		<cloudfoundry-client.version>2.23.0.RELEASE</cloudfoundry-client.version>
 		<reactor-core.version>3.0.7.RELEASE</reactor-core.version>
-		<reactor-netty.version>0.6.3.RELEASE</reactor-netty.version>
+		<reactor-netty.version>0.6.6.RELEASE</reactor-netty.version>
 	</properties>
 
 	<dependencies>
@@ -41,32 +41,32 @@
 		<dependency>
 	        <groupId>org.cloudfoundry</groupId>
 	        <artifactId>cloudfoundry-client</artifactId>
-	        <version>2.13.0.RELEASE</version>
+			<version>${cloudfoundry-client.version}</version>
 	    </dependency>
 	        <dependency>
 	        <groupId>org.cloudfoundry</groupId>
 	        <artifactId>cloudfoundry-util</artifactId>
-	        <version>2.13.0.RELEASE</version>
+			<version>${cloudfoundry-client.version}</version>
 	    </dependency>
 	    <dependency>
 	        <groupId>org.cloudfoundry</groupId>
 	        <artifactId>cloudfoundry-client-reactor</artifactId>
-	        <version>2.13.0.RELEASE</version>
+			<version>${cloudfoundry-client.version}</version>
 	    </dependency>
 	    <dependency>
 	        <groupId>org.cloudfoundry</groupId>
 	        <artifactId>cloudfoundry-operations</artifactId>
-	        <version>2.13.0.RELEASE</version>
+			<version>${cloudfoundry-client.version}</version>
 	    </dependency>
 	    <dependency>
 	        <groupId>io.projectreactor</groupId>
 	        <artifactId>reactor-core</artifactId>
-	        <version>3.0.7.RELEASE</version>
+			<version>${reactor-core.version}</version>
 	    </dependency>
 	    <dependency>
 	        <groupId>io.projectreactor.ipc</groupId>
 	        <artifactId>reactor-netty</artifactId>
-	        <version>0.6.3.RELEASE</version>
+			<version>${reactor-netty.version}</version>
 	    </dependency>
 
 		<dependency>

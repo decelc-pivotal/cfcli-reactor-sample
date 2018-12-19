@@ -8,7 +8,9 @@ import org.cloudfoundry.reactor.TokenProvider;
 import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
 import org.cloudfoundry.reactor.tokenprovider.ClientCredentialsGrantTokenProvider;
 import org.cloudfoundry.reactor.uaa.ReactorUaaClient;
+import org.cloudfoundry.reactor.client.ReactorCloudFoundryClient;
 import org.cloudfoundry.uaa.UaaClient;
+import org.cloudfoundry.client.CloudFoundryClient;
 import org.cloudfoundry.uaa.users.ListUsersRequest;
 import org.cloudfoundry.uaa.users.ListUsersResponse;
 import org.cloudfoundry.uaa.users.User;
@@ -33,6 +35,13 @@ import org.cloudfoundry.uaa.tokens.TokenKey;
 import org.cloudfoundry.uaa.clients.ListClientsRequest;
 import org.cloudfoundry.uaa.clients.ListClientsResponse;
 import org.cloudfoundry.uaa.clients.Client;
+
+import org.cloudfoundry.client.v2.buildpacks.ListBuildpacksRequest;
+import org.cloudfoundry.client.v2.buildpacks.ListBuildpacksResponse;
+import org.cloudfoundry.client.v2.buildpacks.BuildpackEntity;
+import org.cloudfoundry.client.v2.buildpacks.BuildpackResource;
+
+
 @RestController
 @SpringBootApplication
 public class CfcliReactorSampleApplication {
@@ -60,8 +69,16 @@ public class CfcliReactorSampleApplication {
 		return ReactorUaaClient.builder().connectionContext(connectionContext).tokenProvider(tokenProvider).build();
 	}
 
+	@Bean
+	ReactorCloudFoundryClient cfClient(ConnectionContext connectionContext, ClientCredentialsGrantTokenProvider tokenProvider) {
+		return ReactorCloudFoundryClient.builder().connectionContext(connectionContext).tokenProvider(tokenProvider).build();
+	}
+
 	@Autowired
 	UaaClient uaaClient;
+
+	@Autowired
+	CloudFoundryClient cfClient;
 
 	public static void main(String[] args) {
 		SpringApplication.run(CfcliReactorSampleApplication.class, args);
@@ -80,6 +97,14 @@ public class CfcliReactorSampleApplication {
 				.flatMapIterable(ListUsersResponse::getResources)
 				.map(User::getUserName).blockLast();
 
+	}
+
+	@GetMapping("/buildPacks")
+	public ResponseEntity <List<BuildpackResource>> buildPacks() {
+		ListBuildpacksRequest r = ListBuildpacksRequest.builder()
+							.build();
+
+		return cfClient.buildpacks().list(r).map(buildpack -> ResponseEntity.ok(buildpack.getResources())).block();
 	}
 
 	@GetMapping("/listUsers")

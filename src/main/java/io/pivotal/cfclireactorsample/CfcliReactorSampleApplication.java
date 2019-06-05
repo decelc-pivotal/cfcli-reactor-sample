@@ -1,6 +1,8 @@
 package io.pivotal.cfclireactorsample;
 
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import org.cloudfoundry.reactor.ConnectionContext;
 import org.cloudfoundry.reactor.DefaultConnectionContext;
@@ -40,38 +42,58 @@ import org.cloudfoundry.client.v2.buildpacks.ListBuildpacksRequest;
 import org.cloudfoundry.client.v2.buildpacks.ListBuildpacksResponse;
 import org.cloudfoundry.client.v2.buildpacks.BuildpackEntity;
 import org.cloudfoundry.client.v2.buildpacks.BuildpackResource;
-
+import java.net.URL;
 
 @RestController
 @SpringBootApplication
 public class CfcliReactorSampleApplication {
 
+	private static final Logger logger = LoggerFactory.getLogger(CfcliReactorSampleApplication.class);
+
 	@Bean
-	DefaultConnectionContext connectionContext(@Value("${cf.apiHost}") String apiHost,
-			@Value("${cf.skipSslValidation:true}") Boolean skipSslValidation) {
-		return DefaultConnectionContext.builder().apiHost(apiHost).skipSslValidation(skipSslValidation).build();
+	public ReactorCloudFoundryClient reactorCloudFoundryClient(@Value("${cf.apiHost}") String apiHost, @Value("${cf.skipSslValidation:true}") Boolean skipSslValidation, @Value("${cf.username}") String username,
+			@Value("${cf.password}") String password)  {
+			logger.trace("In reactorCloudFoundryClient with properties: \n{}", apiHost);
+
+			return ReactorCloudFoundryClient.builder()
+							.connectionContext(cloudControllerConnectionContext(apiHost, skipSslValidation))
+							.tokenProvider(clientCredentialsGrantTokenProvider(username, password))
+							.build();
 	}
 
 	@Bean
-	PasswordGrantTokenProvider tokenProvider(@Value("${cf.username}") String username,
+	public ReactorUaaClient reactorUaaClient(@Value("${cf.apiHost}") String apiHost, @Value("${cf.skipSslValidation:true}") Boolean skipSslValidation, @Value("${cf.username}") String username,
 			@Value("${cf.password}") String password) {
-		return PasswordGrantTokenProvider.builder().username(username).password(password).build();
+			logger.trace("In reactorCloudFoundryClient with properties: \n{}", apiHost);
+
+			return ReactorUaaClient.builder()
+							.connectionContext(uaaConnectionContext(apiHost,skipSslValidation))
+							.tokenProvider(clientCredentialsGrantTokenProvider(username, password))
+							.build();
 	}
 
-	@Bean
-	ClientCredentialsGrantTokenProvider clientTokenProvider(@Value("${cf.username}") String username,
-			@Value("${cf.password}") String password) {
-		return ClientCredentialsGrantTokenProvider.builder().clientSecret(password).clientId(username).build();
+	private ConnectionContext cloudControllerConnectionContext(String apiHost, Boolean skipSslValidation) {
+			//final URL baseUrl = new URL(cfProperties.getBaseUrl());
+			return DefaultConnectionContext.builder()
+							.apiHost(apiHost)
+							//.port(baseUrl.getPort())
+							.skipSslValidation(skipSslValidation)
+							.build();
 	}
 
-	@Bean
-	ReactorUaaClient uaaClient(ConnectionContext connectionContext, ClientCredentialsGrantTokenProvider tokenProvider) {
-		return ReactorUaaClient.builder().connectionContext(connectionContext).tokenProvider(tokenProvider).build();
+	private ConnectionContext uaaConnectionContext(String apiHost, Boolean skipSslValidation) {
+			//final URL uaaUrl = new URL(cfProperties.getOauth2().getClient().getAccessTokenUri());
+			return DefaultConnectionContext.builder()
+							.apiHost(apiHost)
+							//.port(uaaUrl.getPort())
+							.skipSslValidation(skipSslValidation)
+							.build();
 	}
 
-	@Bean
-	ReactorCloudFoundryClient cfClient(ConnectionContext connectionContext, ClientCredentialsGrantTokenProvider tokenProvider) {
-		return ReactorCloudFoundryClient.builder().connectionContext(connectionContext).tokenProvider(tokenProvider).build();
+	private TokenProvider clientCredentialsGrantTokenProvider(String username, String password) {
+			return ClientCredentialsGrantTokenProvider.builder()
+							.clientId(username)
+							.clientSecret(password).build();
 	}
 
 	@Autowired
@@ -84,42 +106,32 @@ public class CfcliReactorSampleApplication {
 		SpringApplication.run(CfcliReactorSampleApplication.class, args);
 	}
 
-	@GetMapping("/getUserName")
-	public @ResponseBody String getUser(@RequestParam(value="id") String id) {
-		//String userId="bf9fa74d-1857-42bd-9518-6bb80410f7cf";
-
-		ListUsersRequest r = ListUsersRequest.builder()
-							.filter(String.format("id eq \"%s\"", id))
-							.build();
-
-		return uaaClient.users()
-				.list(r)
-				.flatMapIterable(ListUsersResponse::getResources)
-				.map(User::getUserName).blockLast();
-
-	}
 
 	@GetMapping("/buildPacks")
 	public ResponseEntity <List<BuildpackResource>> buildPacks() {
-		ListBuildpacksRequest r = ListBuildpacksRequest.builder()
-							.build();
 
-		return cfClient.buildpacks().list(r).map(buildpack -> ResponseEntity.ok(buildpack.getResources())).block();
+		ListBuildpacksRequest r = ListBuildpacksRequest.builder().build();
+
+		return cfClient
+			.buildpacks()
+			.list(r)
+			.map(buildpack -> ResponseEntity.ok(buildpack.getResources()))
+			.block();
 	}
 
-	@GetMapping("/listUsers")
-	public ResponseEntity <List<User>> listUsers() {
-		ListUsersRequest r = ListUsersRequest.builder()
-							.build();
+	 @GetMapping("/listUsers")
+	 public ResponseEntity <List<User>> listUsers() {
+	 	ListUsersRequest r = ListUsersRequest.builder()
+	 						.build();
 
-		return uaaClient.users().list(r).map(user -> ResponseEntity.ok(user.getResources())).block();
+	 	return uaaClient.users().list(r).map(user -> ResponseEntity.ok(user.getResources())).block();
 	}
 
 	@GetMapping("/listClients")
 	public ResponseEntity <List<Client>> listClients() {
-		ListClientsRequest r = ListClientsRequest.builder()
+	ListClientsRequest r = ListClientsRequest.builder()
 							.build();
 
-		return uaaClient.clients().list(r).map(client -> ResponseEntity.ok(client.getResources())).block();
-	}
+	 	return uaaClient.clients().list(r).map(client -> ResponseEntity.ok(client.getResources())).block();
+	 }
 }
